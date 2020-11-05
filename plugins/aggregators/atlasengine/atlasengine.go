@@ -236,10 +236,10 @@ func (atlasEngine *AtlasEngine) handleFlowNodeLogic(metric telegraf.Metric) {
 		atlasEngine.flowNodeCache[flowNodeId] = temp
 
 		tempInstance := atlasEngine.flowNodeInstanceCache[flowNodeInstanceId]
-    tempInstance.fields.startTime = time.Now().UnixNano()
+		tempInstance.fields.startTime = time.Now().UnixNano()
 		atlasEngine.flowNodeInstanceCache[flowNodeInstanceId] = tempInstance
 
-  }
+	}
 
 	// handel finished FlowNode
 	if isFlowNodeStopped(eventType) {
@@ -256,14 +256,14 @@ func (atlasEngine *AtlasEngine) handleFlowNodeLogic(metric telegraf.Metric) {
 
 		if temp.fields.running > 0 {
 			temp.fields.running--
-    }
+		}
 
 		tempInstance.fields.stopTime = time.Now().UnixNano()
 		tempInstance.fields.duration = time.Now().UnixNano() - tempInstance.fields.startTime
 
 		atlasEngine.flowNodeCache[flowNodeId] = temp
-    atlasEngine.flowNodeInstanceCache[flowNodeInstanceId] = tempInstance
-  }
+		atlasEngine.flowNodeInstanceCache[flowNodeInstanceId] = tempInstance
+	}
 }
 
 // Add is run on every metric which passes the plugin
@@ -282,13 +282,13 @@ func (atlasEngine *AtlasEngine) Push(accumulator telegraf.Accumulator) {
 	for _, aggregate := range atlasEngine.processModelCache {
 
 		fieldsCounter := map[string]interface{}{}
-    fieldsCounter["processModel_finishedError"] = aggregate.fields.finishedError
-    fieldsCounter["processModel_finishedErrorFree"] = aggregate.fields.finishedErrorFree
-    accumulator.AddCounter(aggregate.name, fieldsCounter, aggregate.tags)
+		fieldsCounter["processModel_finishedError"] = aggregate.fields.finishedError
+		fieldsCounter["processModel_finishedErrorFree"] = aggregate.fields.finishedErrorFree
+		accumulator.AddCounter(aggregate.name, fieldsCounter, aggregate.tags)
 
-    fieldsGauge := map[string]interface{}{}
-    fieldsGauge["processModel_running"] = aggregate.fields.running
-    accumulator.AddGauge(aggregate.name, fieldsGauge, aggregate.tags)
+		fieldsGauge := map[string]interface{}{}
+		fieldsGauge["processModel_running"] = aggregate.fields.running
+		accumulator.AddGauge(aggregate.name, fieldsGauge, aggregate.tags)
 	}
 
 	for processInstanceId, aggregateInstance := range atlasEngine.processModelInstanceCache {
@@ -296,12 +296,12 @@ func (atlasEngine *AtlasEngine) Push(accumulator telegraf.Accumulator) {
 		// skip pushing metrick because processInstance is not finished yet
 		if aggregateInstance.fields.stopTime == 0 {
 			continue
-    }
+		}
 
-    fieldsGauge := map[string]interface{}{}
-		fieldsGauge["processModelInstacne_startTime"] = aggregateInstance.fields.startTime
-		fieldsGauge["processModelInstacne_stopTime"] = aggregateInstance.fields.stopTime
-		fieldsGauge["processModelInstacne_duration"] = aggregateInstance.fields.duration
+		fieldsGauge := map[string]interface{}{}
+		fieldsGauge["processModelInstance_startTime"] = aggregateInstance.fields.startTime
+		fieldsGauge["processModelInstance_stopTime"] = aggregateInstance.fields.stopTime
+		fieldsGauge["processModelInstance_duration"] = aggregateInstance.fields.duration
 
 		delete(atlasEngine.processModelInstanceCache, processInstanceId)
 		accumulator.AddGauge(aggregateInstance.name, fieldsGauge, aggregateInstance.tags)
@@ -309,13 +309,13 @@ func (atlasEngine *AtlasEngine) Push(accumulator telegraf.Accumulator) {
 
 	for _, aggregate := range atlasEngine.flowNodeCache {
 
-    fieldsCounter := map[string]interface{}{}
-    fieldsCounter["flowNode_finishedError"] = aggregate.fields.finishedError
+		fieldsCounter := map[string]interface{}{}
+		fieldsCounter["flowNode_finishedError"] = aggregate.fields.finishedError
 		fieldsCounter["flowNode_finishedErrorFree"] = aggregate.fields.finishedErrorFree
-    accumulator.AddCounter(aggregate.name, fieldsCounter, aggregate.tags)
+		accumulator.AddCounter(aggregate.name, fieldsCounter, aggregate.tags)
 
-    fieldsGauge := map[string]interface{}{}
-    fieldsGauge["flowNode_running"] = aggregate.fields.running
+		fieldsGauge := map[string]interface{}{}
+		fieldsGauge["flowNode_running"] = aggregate.fields.running
 		accumulator.AddGauge(aggregate.name, fieldsGauge, aggregate.tags)
 	}
 
@@ -326,10 +326,10 @@ func (atlasEngine *AtlasEngine) Push(accumulator telegraf.Accumulator) {
 			continue
 		}
 
-    fieldsGauge := map[string]interface{}{}
-		fieldsGauge["flowNodeInstacne_startTime"] = aggregateInstance.fields.startTime
-		fieldsGauge["flowNodeInstacne_stopTime"] = aggregateInstance.fields.stopTime
-		fieldsGauge["flowNodeInstacne_duration"] = aggregateInstance.fields.duration
+		fieldsGauge := map[string]interface{}{}
+		fieldsGauge["flowNodeInstance_startTime"] = aggregateInstance.fields.startTime
+		fieldsGauge["flowNodeInstance_stopTime"] = aggregateInstance.fields.stopTime
+		fieldsGauge["flowNodeInstance_duration"] = aggregateInstance.fields.duration
 
 		delete(atlasEngine.flowNodeInstanceCache, flowNodeInstanceId)
 		accumulator.AddGauge(aggregateInstance.name, fieldsGauge, aggregateInstance.tags)
