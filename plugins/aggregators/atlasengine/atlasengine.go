@@ -2,7 +2,6 @@ package atlasengine
 
 import (
 	"time"
-
 	"github.com/influxdata/telegraf"
 	"github.com/influxdata/telegraf/plugins/aggregators"
 )
@@ -103,7 +102,7 @@ func isFlowNodeError(eventType string) bool {
 	return eventType == "OnFlowNodeError"
 }
 
-func (atlasEngine *AtlasEngine) initProcessModelCache(metric telegraf.Metric) (string, string) {
+func (atlasEngine *AtlasEngine) initProcessModelCache(metric telegraf.Metric) {
 
 	processModelId, _ := metric.GetTag("processModelId")
 	processInstanceId, _ := metric.GetTag("processInstanceId")
@@ -136,15 +135,17 @@ func (atlasEngine *AtlasEngine) initProcessModelCache(metric telegraf.Metric) (s
 		}
 		atlasEngine.processModelInstanceCache[processInstanceId] = aggregateInstance
 	}
-
-	return processModelId, processInstanceId
 }
 
-func (atlasEngine *AtlasEngine) initFlowNodeCache(metric telegraf.Metric) (string, string) {
+func (atlasEngine *AtlasEngine) initFlowNodeCache(metric telegraf.Metric) {
 
-	flowNodeId, _ := metric.GetTag("flowNodeId")
+	flowNodeId, ok := metric.GetTag("flowNodeId")
 	flowNodeInstanceId, _ := metric.GetTag("flowNodeInstanceId")
-	flowNodeType, _ := metric.GetTag("flowNodeType")
+  flowNodeType, _ := metric.GetTag("flowNodeType")
+
+  if !ok{
+    return
+  }
 
 	// hit an uncached flowNodeId, create caches for first time
 	if _, ok := atlasEngine.flowNodeCache[flowNodeId]; !ok {
@@ -173,8 +174,6 @@ func (atlasEngine *AtlasEngine) initFlowNodeCache(metric telegraf.Metric) (strin
 		}
 		atlasEngine.flowNodeInstanceCache[flowNodeInstanceId] = aggregateInstance
 	}
-
-	return flowNodeId, flowNodeInstanceId
 }
 
 func (atlasEngine *AtlasEngine) handleProcessModelLogic(metric telegraf.Metric) {
@@ -224,9 +223,15 @@ func (atlasEngine *AtlasEngine) handleProcessModelLogic(metric telegraf.Metric) 
 
 func (atlasEngine *AtlasEngine) handleFlowNodeLogic(metric telegraf.Metric) {
 
-	eventType, _ := metric.GetTag("eventType")
-	flowNodeId, _ := metric.GetTag("flowNodeId")
+
+  flowNodeId, ok := metric.GetTag("flowNodeId")
 	flowNodeInstanceId, _ := metric.GetTag("flowNodeInstanceId")
+  eventType, _ := metric.GetTag("eventType")
+
+  if !ok{
+    return
+  }
+
 
 	// handel started FlowNode
 	if isFlowNodeStarted(eventType) {
@@ -284,7 +289,7 @@ func (atlasEngine *AtlasEngine) Push(accumulator telegraf.Accumulator) {
 		fieldsCounter := map[string]interface{}{}
 		fieldsCounter["processModel_finishedError"] = aggregate.fields.finishedError
 		fieldsCounter["processModel_finishedErrorFree"] = aggregate.fields.finishedErrorFree
-		accumulator.AddCounter(aggregate.name, fieldsCounter, aggregate.tags)
+    accumulator.AddCounter(aggregate.name, fieldsCounter, aggregate.tags)
 
 		fieldsGauge := map[string]interface{}{}
 		fieldsGauge["processModel_running"] = aggregate.fields.running
@@ -312,7 +317,7 @@ func (atlasEngine *AtlasEngine) Push(accumulator telegraf.Accumulator) {
 		fieldsCounter := map[string]interface{}{}
 		fieldsCounter["flowNode_finishedError"] = aggregate.fields.finishedError
 		fieldsCounter["flowNode_finishedErrorFree"] = aggregate.fields.finishedErrorFree
-		accumulator.AddCounter(aggregate.name, fieldsCounter, aggregate.tags)
+    accumulator.AddCounter(aggregate.name, fieldsCounter, aggregate.tags)
 
 		fieldsGauge := map[string]interface{}{}
 		fieldsGauge["flowNode_running"] = aggregate.fields.running
